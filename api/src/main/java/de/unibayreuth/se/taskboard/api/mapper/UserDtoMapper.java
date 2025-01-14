@@ -9,24 +9,24 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 @Mapper(componentModel = "spring")
 @ConditionalOnMissingBean // prevent IntelliJ warning about duplicate beans
 @NoArgsConstructor
 public abstract class UserDtoMapper {
-    public abstract UserDto fromBusiness(User source);
 
-    //TODO: Fix this mapper after resolving the other TODOs.
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "name", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    //@Mapping(target = "createdAt", expression = "java(mapTimestamp(source.getCreatedAt()))")
-    public abstract User toBusiness(UserDto source);
+    private boolean utcNowUpdated = false;
+    private LocalDateTime utcNow;
 
-    protected LocalDateTime mapTimestamp (LocalDateTime timestamp) {
-        if (timestamp == null) {
-            return LocalDateTime.now(ZoneId.of("UTC"));
-        }
-        return timestamp;
+    public abstract UserDto fromBusiness(User user);
+
+    @Mapping(target = "id", ignore = true) // ID is auto-generated
+    @Mapping(target = "createdAt", expression = "java(mapTimestamp(source.getCreatedAt()))")
+    public abstract User toBusiness(UserDto userDto);
+
+    protected LocalDateTime mapTimestamp(LocalDateTime timestamp) {
+        return timestamp != null ? timestamp : LocalDateTime.now(ZoneId.of("UTC"));
     }
+    public UserDto optionalToDto(Optional<User> source) { return source.map(this::fromBusiness).orElse(null);}
 }
